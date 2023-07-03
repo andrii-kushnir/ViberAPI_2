@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>ViberBot Web-service</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <h2>Ввести адресу</h2>
+    <form id="form">
+        <label>Url: <input type="text" name="name" style="width: 400px;"></label>
+        <br><br>
+        <button type="submit"> Відіслати </button>
+    </form>
+    <p id="log"></p>
+    <p id="result"></p>
+    <script>
+        async function SetWebhook(hook) {
+            const response = await fetch("/hook", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify(hook)
+            });
+            if (response.ok === true) {
+                result.textContent = `Ok - ${hook}`;
+            }
+        }
+
+        function logSubmit(event) {
+            const name = form.elements["name"].value;
+            log.textContent = `Відіслано: ${name} !`;
+            SetWebhook(name);
+            event.preventDefault();
+        }
+
+        const form = document.getElementById("form");
+        const log = document.getElementById('log');
+        const result = document.getElementById('result');
+        form.addEventListener('submit', logSubmit);
+    </script>
+</body>
+</html>
