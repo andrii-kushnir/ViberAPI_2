@@ -39,22 +39,9 @@ namespace ViberAPI.Controllers
 
         private const string null_number = "000000000000";
 
-        //private static readonly List<Click> clicks = new List<Click>();
-        //private readonly Timer _timerClicks;
-
-        //private const int intervalClear = 60 * 60 * 1000; // Кількість хвилин неактивності
-        //private const int intervalChek = 60 * 1000; // Інтервал провірки неактивності
-
-        //private class Click
-        //{
-        //    public string id;
-        //    public string action;
-        //    public DateTime dateTime;
-        //}
 
         public MainController()
         {
-            //_timerClicks = new Timer(new TimerCallback(SendMainMenu), null, intervalChek, intervalChek);
         }
 
         // GET main/viber.ars.ua
@@ -134,7 +121,7 @@ namespace ViberAPI.Controllers
                             messageSend = MessageSend.MessageStartMain(false, "Вітаємо в будівельному супермаркеті АРС-Кераміка!"); // SM[123]
                         }
                     }
-                    else if ((message.context.Length == 5 || message.context.Length == 17) && message.context.Substring(0, 5) == "BUHNT")
+                    else if ((message.context.Length == 5 || message.context.Length >= 17 ) && message.context.Substring(0, 5) == "BUHNT")
                     {
                         Logger.Info($"New client(from Buhnet) - {user.name} Tel - {message.context} ChatId - {user.id} ");
                         if (message.context.Length == 5)
@@ -142,10 +129,30 @@ namespace ViberAPI.Controllers
                             userViber = UserManager.Current.AddOrFindUserViber(user, InviteType.Buhnet);
                             messageSend = MessageSend.MessageActivateBot($"Вітаємо! Щоб запустити чат-бот АРС, натисніть кнопку «Активувати бот», або введіть свій номер телефону у форматі 380ххххххххх. Гарного дня та вдалих покупок!(smiley)");
                         }
-                        else //(message.context.Length == 17)
+                        else //(message.context.Length >= 17)
                         {
                             userViber = UserManager.Current.AddOrFindUserViber(user, InviteType.Buhnet, message.context.Substring(5, 12));
                             messageSend = MessageSend.MessageStartMain(false, "Вітаємо в будівельному супермаркеті АРС-Кераміка!"); // SM[123]
+                            if (message.context.Length > 17)
+                            {
+                                var operatorStr = message.context.Substring(17);
+                                if (int.TryParse(operatorStr, out int operatorCode))
+                                    await UserManager.Current.AttachOperator(userViber, operatorCode);
+                            }
+                        }
+                    }
+                    else if (message.context.Length == 17 && message.context.Substring(0, 5) == "WORKS")
+                    {
+                        Logger.Info($"New worker - {user.name} Tel - {message.context} ChatId - {user.id} ");
+                        {
+                            userViber = UserManager.Current.AddOrFindUserViber(user, InviteType.Worker, message.context.Substring(5, 12));
+                            messageSend = MessageSend.MessageWorksInvite($"Вітаємо в будівельному супермаркеті АРС-Кераміка!\nСюди Вам будуть приходити повідомелння.\nНатисніть на кнопку нижче для підписки на Бота"); // WI
+                            //messageSend = new MessageSend()
+                            //{
+                            //    sender = new Sender() {name = "АРС-бот"},
+                            //    type = "text",
+                            //    text = $"Вітаємо в будівельному супермаркеті АРС-Кераміка!\nСюди Вам будуть приходити повідомелння.\nНатисніть на кнопку нижче для підписки на Бота"
+                            //};
                         }
                     }
                     else
@@ -169,6 +176,8 @@ namespace ViberAPI.Controllers
                                 userViber = UserManager.Current.AddOrFindUserViber(user, InviteType.Unknown);
                                 var file_name = message.message.file_name;
                                 var file_url = message.message.media;
+                                if (string.IsNullOrEmpty(file_name))
+                                    file_name = Guid.NewGuid().ToString();
                                 switch (message.message.type)
                                 {
                                     case "picture":
@@ -191,7 +200,10 @@ namespace ViberAPI.Controllers
                                 userViber = UserManager.Current.AddOrFindUserViber(user, InviteType.Unknown);
                                 if (message.message?.contact?.phone_number != null)
                                 {
-                                    userViber.phone = message.message.contact.phone_number;
+                                    if (message.message.contact.phone_number.Length > 12)
+                                        userViber.phone = message.message.contact.phone_number.Substring(message.message.contact.phone_number.Length - 12);
+                                    else
+                                        userViber.phone = message.message.contact.phone_number;
                                     await UserManager.Current.SetPhoneAsync(userViber);
                                     await HandlerManager.Current.AddAndSendMessageAsync(userViber, "Клієнт. Надав номер телефону.", ChatMessageTypes.Menu);
                                     DataProvider.Current.GetClientFromSQL(userViber);
@@ -300,6 +312,14 @@ namespace ViberAPI.Controllers
                                 }
                                 break;
                             }
+
+                            //Запрошення працівника АРС:
+                            if (Regex.IsMatch(message.message.text, @"MENU#WI"))
+                            {
+                                await HandlerManager.Current.SendClearKeyboardAsync(user.id);
+                                break;
+                            }
+
                             //Попереднє меню:
                             string previousMenu = null;
                             if (message.message.text.Length >= 5 && message.message.text.Substring(0, 5) == "MENU#")

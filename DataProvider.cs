@@ -81,7 +81,7 @@ namespace ViberAPI
                 {
                     connection.Open();
                     reader = command.ExecuteReader();
-
+                    
                     while (reader.Read())
                     {
                         var oper = new UserArsenium
@@ -92,11 +92,12 @@ namespace ViberAPI
                             UserType = UserTypes.Asterium,
                             Avatar = Convert.ToString(reader["icon"]),
                             Online = false,
-                            Active = Convert.ToBoolean(reader["active"])
+                            Active = Convert.ToBoolean(reader["active"]),
+                            Codep = reader["codep"] == System.DBNull.Value ? 0 : Convert.ToInt32(reader["codep"])
                         };
                         
                         var Id = Convert.ToString(reader["guid"]);
-                        oper.Id = !String.IsNullOrWhiteSpace(Id) ? new Guid(Id) : Guid.Empty;
+                        oper.Id = String.IsNullOrWhiteSpace(Id) ? Guid.Empty : new Guid(Id);
 
                         if (reader["permission"] != System.DBNull.Value)
                             oper.SetPermission(Convert.ToString(reader["permission"]));

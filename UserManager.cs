@@ -184,6 +184,20 @@ namespace ViberAPI
             DataProvider.Current.SetAttachOperatorSQL(userViber, oper);
         }
 
+        public async Task AttachOperator(UserViber userViber, int operCode)
+        {
+            var oper = UserList.Where(us => us.UserType == UserTypes.Asterium).FirstOrDefault(us => (us as UserArsenium)?.Codep == operCode) as UserArsenium;
+
+            if (oper == null || userViber.operatoId == oper.Id)
+                return;
+
+            userViber.operatoId = oper.Id;
+            userViber.operatoName = oper.Name;
+
+            await UserManager.Current.SendToAllOperatorsAsync(new AttachOperatorRequest(userViber));
+            DataProvider.Current.SetAttachOperatorSQL(userViber, oper);
+        }
+
         public void SetUnsubscribed(string userId)
         {
             var user = FindUserViber(userId);

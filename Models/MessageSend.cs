@@ -213,6 +213,40 @@ namespace ViberAPI.Models
             return message;
         }
 
+        public static MessageSend MessageWorksInvite(string text = null)
+        {
+            var message = new MessageSend()
+            {
+                min_api_version = 6,
+                sender = new Sender()
+                {
+                    name = "АРС-бот",
+                },
+                type = (text == null ? null : "text"),
+                text = text,
+                keyboard = new Keyboard()
+                {
+                    InputFieldState = "regular",
+                    Buttons = new List<Button>()
+                                {
+                                    new Button()
+                                    {
+                                        Columns = 6,
+                                        Rows = 1,
+                                        Text = "<font color=\"#FFFFFF\"><font size=\"16\">Підписатись</font></font>",
+                                        Image = "https://viber.ars.ua/worksinvite.png",
+                                        TextOpacity = 0,
+                                        ActionType = "reply",
+                                        ActionBody = "MENU#WI",
+                                        BgColor = "#3E3D3C",
+                                        Silent = true
+                                    }
+                                }
+                }
+            };
+            return message;
+        }
+
         public static MessageSend MessageEndСonversation()
         {
             var message = new MessageSend()
